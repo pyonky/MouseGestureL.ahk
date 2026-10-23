@@ -1,0 +1,92 @@
+﻿;===============================================================================
+;
+;		MouseGestureL.ahk - Plugin Sample Script
+;
+;	* Don't use "MG_" to public tokens like Labels and Functions and Globals,
+;	  it may conflict to the other tokens.
+;	  Use unique token like your name as the prefix.
+;
+;														Created by Pyonkichi
+;===============================================================================
+
+;-------------------------------------------------------------------------------
+; Initializing strings by language
+
+if (MG_Language = "Japanese")
+{
+	foo_LngMenu001		:= "ジェスチャーリストを表示"
+	foo_LngCondition001	:= "その他"
+	foo_LngCondition002	:= "カーソル位置の色"
+	foo_LngCondition003	:= "色を取得したい場所を右クリック"
+	foo_LngAction001	:= "トースト通知を表示"
+	foo_LngAction002	:= "`n`t表示する文字列を入力してください。"
+}
+;else if (MG_Language = "Other Language")
+;{
+;	...
+;}
+else ;if (MG_Language = "English")
+{
+	foo_LngMenu001		:= "Show Gesture List"
+	foo_LngCondition001	:= "Others"
+	foo_LngCondition002	:= "Cursor Position Color"
+	foo_LngCondition003	:= "Right-Click on Target Pixel"
+	foo_LngAction001	:= "Display a Toast Notification"
+	foo_LngAction002	:= "`n`tInput Text to be Shown"
+}
+
+;-------------------------------------------------------------------------------
+; Registering Plugin Items
+
+; for MouseGestureL.ahk
+if (!MG_IsEdit) {
+	; Regisger Plugin Menu
+	MG_CallIfDefined("MG_AddPluginMenu", foo_LngMenu001, MG_ShowAllGestureList)
+}
+
+; for MG_Edit.ahk
+else {
+	; Regisger Custom Conditions
+	MG_CallIfDefined("ME_AddConditionCategory", "Others", foo_LngCondition001)
+	MG_CallIfDefined("ME_AddCustomCondition", "Others", foo_LngCondition002
+												, "<Dialog>foo_GetPixelColor")
+	; Register Action Templates
+	MG_CallIfDefined("ME_AddActionTemplate", "Others", foo_LngAction001
+									, "TrayTip(`"%[" foo_LngAction002 "]%`")")
+}
+
+GoTo("foo_PluginEnd")
+
+
+;-------------------------------------------------------------------------------
+; [Custom Condition Command]
+;	Get Pixel Color
+;-------------------------------------------------------------------------------
+foo_GetPixelColor() {
+	SetTimer(foo_PickerTimer, 20)
+	Hotkey("RButton UP", foo_PickColor, "On")
+}
+
+foo_PickerTimer(*) {
+	ToolTip(foo_LngCondition003)
+}
+
+foo_PickColor(*) {
+	MouseGetPos(&x, &y)
+	SetTimer(foo_PickerTimer, 0)
+	Hotkey("RButton UP", "Off")
+	ToolTip()
+	fooColor := PixelGetColor(x, y, "Alt")
+	MG_CallIfDefined("ME_SetRuleValue", "foo_CheckColor(" fooColor ")")
+}
+
+;-------------------------------------------------------------------------------
+; [Function for Custom Condition]
+;	Check whether the color under the cursor is the specified color.
+;	color : Color to be compared
+;-------------------------------------------------------------------------------
+foo_CheckColor(color) {
+	return (color = PixelGetColor(MG_X, MG_Y, "Alt"))
+}
+
+foo_PluginEnd:

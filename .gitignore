@@ -1,0 +1,3 @@
+# AutoHotkey runtime binaries included only in release packages
+/AutoHotkey/AutoHotkey32.exe
+/AutoHotkey/AutoHotkey64.exe
