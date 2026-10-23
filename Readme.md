@@ -85,4 +85,4 @@ Thanks also to **Shirubadappuru** for creating the Japanese and English help doc
 
 - [AutoHotkey Official Website](https://www.autohotkey.com/)
 - [MouseGestureL.ahk Official Website](https://ss1.xrea.com/pyonkichi.g1.xrea.com/en/mglahk.html)
-- [Support Forum](https://autohotkey.com/boards/viewtopic.php?f=6&t=31859)
+- [Support Forum](https://www.autohotkey.com/boards/viewtopic.php?f=83&t=141266)
