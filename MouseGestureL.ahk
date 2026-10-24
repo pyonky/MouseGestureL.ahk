@@ -59,7 +59,7 @@ MG_InitGlobals()
 	MG_PluginMenus		:= []
 	MG_COPYRIGHT1		:= "Copyright (C) 2007-2008 lukewarm"
 	MG_COPYRIGHT2		:= "Copyright (C) 2011-2026 Pyonkichi"
-	MG_SUPPORTURL		:= "https://www.autohotkey.com/boards/viewtopic.php?f=6&t=31859"
+	MG_SUPPORTURL		:= "https://www.autohotkey.com/boards/viewtopic.php?f=83&t=141266"
 }
 
 ;-------------------------------------------------------------------------------
