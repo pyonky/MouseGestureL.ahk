@@ -1543,7 +1543,7 @@ MG_SendWheel(dir, counts:=1)
 ;-------------------------------------------------------------------------------
 MG_WinMove(x:="", y:="", w:="", h:="", bRel:=false, hWnd:=0, exArea:="", bAdjust:=false)
 {
-	if (x="" && y="" && w="" && h="") {
+	if (x=="" && y=="" && w=="" && h=="") {
 		return
 	}
 	if (!hWnd) {
@@ -1553,38 +1553,10 @@ MG_WinMove(x:="", y:="", w:="", h:="", bRel:=false, hWnd:=0, exArea:="", bAdjust
 	; Relative
 	if (bRel) {
 		WinGetPos(&winX, &winY, &winW, &winH, hWnd)
-		; Left Position
-		if (RegExMatch(x, "([0-9]+)/([0-9]+)", &part)) {
-			winX := winX * part[1] // part[2]
-		} else if (x<=0 || 1<=x) {
-			winX += x
-		} else {
-			winX *= x
-		}
-		; Top Position
-		if (RegExMatch(y, "([0-9]+)/([0-9]+)", &part)) {
-			winY := winY * part[1] // part[2]
-		} else if (y<=0 || 1<=y) {
-			winY += y
-		} else {
-			winY *= y
-		}
-		; Width
-		if (RegExMatch(w, "([0-9]+)/([0-9]+)", &part)) {
-			winW := winW * part[1] // part[2]
-		} else if (w<=0 || 1<=w) {
-			winW += w
-		} else {
-			winW *= w
-		}
-		; Height
-		if (RegExMatch(h, "([0-9]+)/([0-9]+)", &part)) {
-			winH := winH * part[1] // part[2]
-		} else if (h<=0 || 1<=h) {
-			winH += h
-		} else {
-			winH *= h
-		}
+		winX := MG_CalcWinPos(winX, x, "X", bRel)
+		winY := MG_CalcWinPos(winY, y, "Y", bRel)
+		winW := MG_CalcWinPos(winW, w, "W", bRel)
+		winH := MG_CalcWinPos(winH, h, "H", bRel)
 	}
 	; Absolute
 	else {
@@ -1598,40 +1570,10 @@ MG_WinMove(x:="", y:="", w:="", h:="", bRel:=false, hWnd:=0, exArea:="", bAdjust
 		}
 		width := rc.right - rc.left
 		height := rc.bottom - rc.top
-		; Left Position
-		if (RegExMatch(x, "([0-9]+)/([0-9]+)", &part)) {
-			winX := width * part[1] // part[2]
-		} else if (x<=0 || 1<=x) {
-			winX := x
-		} else {
-			winX := width * x
-		}
-		winX += rc.left
-		; Top Position
-		if (RegExMatch(y, "([0-9]+)/([0-9]+)", &part)) {
-			winY := height * part[1] // part[2]
-		} else if (y<=0 || 1<=y) {
-			winY := y
-		} else {
-			winY := height * y
-		}
-		winY += rc.top
-		; Width
-		if (RegExMatch(w, "([0-9]+)/([0-9]+)", &part)) {
-			winW := width * part[1] // part[2]
-		} else if (w<0 || 1<=w) {
-			winW := w
-		} else {
-			winW := width * (w!=0 ? w : 1)
-		}
-		; Height
-		if (RegExMatch(h, "([0-9]+)/([0-9]+)", &part)) {
-			winH := height * part[1] // part[2]
-		} else if (h<0 || 1<=h) {
-			winH := h
-		} else {
-			winH := height * (h!=0 ? h : 1)
-		}
+		winX := MG_CalcWinPos(width,  x, "X", bRel) + rc.left
+		winY := MG_CalcWinPos(height, y, "Y", bRel) + rc.top
+		winW := MG_CalcWinPos(width,  w, "W", bRel)
+		winH := MG_CalcWinPos(height, h, "H", bRel)
 	}
 
 	if (bAdjust) {
@@ -1639,11 +1581,41 @@ MG_WinMove(x:="", y:="", w:="", h:="", bRel:=false, hWnd:=0, exArea:="", bAdjust
 	} else {
 		borders := MG_Rect()
 	}
-	winX := (x!="") ? winX-borders.left				: ""
-	winY := (y!="") ? winY-borders.top				: ""
-	winW := (w!="") ? winW+borders.left+borders.right	: ""
-	winH := (h!="") ? winH+borders.top+borders.bottom	: ""
-	WinMove(winX, winY, winW, winH, hWnd)
+	winX := (x!="") ? winX-borders.left					: unset
+	winY := (y!="") ? winY-borders.top					: unset
+	winW := (w!="") ? winW+borders.left+borders.right	: unset
+	winH := (h!="") ? winH+borders.top+borders.bottom	: unset
+	WinMove(winX?, winY?, winW?, winH?, hWnd)
+}
+
+MG_CalcWinPos(basePos, modifier, target, bRelative)
+{
+	if (modifier == "") {
+		return 0
+	}
+	if (RegExMatch(modifier, "([0-9]+)/([0-9]+)", &part)) {
+		result := basePos * part[1] // part[2]
+	}
+	else {
+		Try	{
+			modifier := Number(modifier)
+		} Catch {
+			modifier := 0
+		}
+		if (IsFloat(modifier)) {
+			result := basePos * modifier
+		}
+		else if (bRelative) {
+			result := basePos + modifier
+		}
+		else if (modifier==0 && (target="W" || target="H")) {
+			result := basePos
+		}
+		else {
+			result := modifier
+		}
+	}
+	return result
 }
 
 ;-------------------------------------------------------------------------------
