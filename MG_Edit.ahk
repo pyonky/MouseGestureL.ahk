@@ -3707,7 +3707,7 @@ ME_ShowTarget(idTV, bKeepIcon:=false)
 	ME_CBNoInheritance.Enabled := IsObject(tinf.Parent)
 
 	; Option check boxes
-	(tinf.MatchAll ? ME_RBRuleOR : ME_RBRuleAND).Value := 1
+	(tinf.MatchAll ? ME_RBRuleAND : ME_RBRuleOR).Value := 1
 	ME_CBNoInheritance.Value := tinf.NoInheritance
 	ME_CBDefActionDisabled.Value := tinf.DefActionDisabled
 
