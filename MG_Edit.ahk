@@ -2443,7 +2443,9 @@ ME_CopyKeyPressed()
 {
 	focused := ME_MainDlg.FocusedCtrl
 	if (focused == ME_TVTarget) {
-		ME_CopyTarget()
+		if (!TTV_GetItemEdit()) {
+			ME_CopyTarget()
+		}
 	}
 	else if (focused == ME_LBGesture) {
 		ME_CopyGesture()
@@ -2456,7 +2458,9 @@ ME_CopyKeyPressed()
 ME_PasteKeyPressed()
 {
 	focused := ME_MainDlg.FocusedCtrl
-	if (focused==ME_TVTarget || focused==ME_LBGesture) {
+	if ((focused==ME_TVTarget && !TTV_GetItemEdit())
+	||	focused==ME_LBGesture)
+	{
 		ME_ImportFromClipboard()
 	}
 }
@@ -2477,8 +2481,10 @@ ME_EnterKeyPressed()
 	if (focused == ME_LVMain) {
 		ME_SwitchTab(tabGestures)
 	}
-	else if ((focused == ME_TVTarget) && !ME_GetTVItemEdit(ME_TVTarget)) {
-		ME_SwitchTab(ME_Tab.Value==tabMain ? tabTargets : tabMain)
+	else if (focused == ME_TVTarget) {
+		if (!TTV_GetItemEdit()) {
+			ME_SwitchTab(ME_Tab.Value==tabMain ? tabTargets : tabMain)
+		}
 	}
 	else if ((focused == ME_LBGesture) || (focused == ME_LVPriority)) {
 		ME_SwitchTab(tabMain)
@@ -2504,8 +2510,10 @@ ME_DeleteKeyPressed()
 	if (focused == ME_LBButtons) {
 		ME_DeleteButton()
 	}
-	else if ((focused == ME_TVTarget) && !ME_GetTVItemEdit(ME_TVTarget)) {
-		ME_DeleteTarget()
+	else if (focused == ME_TVTarget) {
+		if (!TTV_GetItemEdit()) {
+			ME_DeleteTarget()
+		}
 	}
 	else if (focused = ME_LVMain) {
 		ME_ReleaseGesture()
@@ -2630,14 +2638,6 @@ ME_SettingSubDlg(dlgFuncStr)
 		return true
 	}
 	return false
-}
-
-;-------------------------------------------------------------------------------
-; Get the handle to the edit control of a TreeView item
-;														Implemented by Pyonkichi
-;-------------------------------------------------------------------------------
-ME_GetTVItemEdit(tvObj) {
-	return SendMessage(0x110F, 0, 0, , tvObj.Hwnd)			; TVM_GETEDITCONTROL
 }
 
 ;-------------------------------------------------------------------------------
@@ -2910,6 +2910,14 @@ _AddTtvChildren(tinfParent)
 			TTV_AddItem(tinf, tinfParent)
 		}
 	}
+}
+
+;-------------------------------------------------------------------------------
+; Retrieve the handle to the edit control of a TreeView item
+;														Implemented by Pyonkichi
+;-------------------------------------------------------------------------------
+TTV_GetItemEdit() {
+	return SendMessage(0x110F, 0, 0, , ME_TVTarget.Hwnd)	; TVM_GETEDITCONTROL
 }
 
 ;-------------------------------------------------------------------------------
@@ -3822,7 +3830,7 @@ ME_SortTarget(*)
 		tinf1.SortChildren()
 		bInserted := false
 		for idx2, tinf2 in arySorted {
-			if ((idx2 > 1) && (tinf1.Name < tinf2.Name)) {
+			if ((idx2 > 1) && (StrCompare(tinf1.Name, tinf2.Name, "Logical") < 0)) {
 				arySorted.InsertAt(idx2, tinf1)
 				bInserted := true
 				break
@@ -4470,7 +4478,7 @@ ME_TargetCanMoveUp(idTV)
 ;														Implemented by Pyonkichi
 ;-------------------------------------------------------------------------------
 ME_TargetCanMoveDown(idTV) {
-	return (ME_TVTarget.GetNext(idTV) == 0) ? false : true						; The last target cannot be moved down.
+	return (idTV==ME_TTVFirstItemID || ME_TVTarget.GetNext(idTV)==0) ? false : true	; The first or last target cannot be moved down.
 }
 
 ;-------------------------------------------------------------------------------
@@ -4956,7 +4964,7 @@ ME_SortGesture(*)
 	for ginf1 in ME_Gestures {
 		bInserted := false
 		for idx, ginf2 in arySorted {
-			if (ginf1.Name < ginf2.Name) {
+			if (StrCompare(ginf1.Name, ginf2.Name, "Logical") < 0) {
 				arySorted.InsertAt(idx, ginf1)
 				bInserted := true
 				break
@@ -6772,8 +6780,9 @@ ME_CopyTarget(bClipboard:=true)
 	if (ME_TVTarget.GetSelection()
 	&&	ME_TargetCanCopy(ME_TVTarget.GetSelection()))
 	{
+		global ME_TargetCounter := 0
 		tinf := TTV_TargetInfo()
-		ME_TargetToIniIncludeChildren(tinf, iniTarget)
+		ME_TargetToIniIncludeChildren(tinf, &iniTarget)
 		iniTarget := RegExReplace(iniTarget, "\n", "`r`n")
 		if (bClipboard) {
 			A_Clipboard := iniTarget

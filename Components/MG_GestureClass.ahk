@@ -68,7 +68,6 @@ class GestureClass
 		this._prevY					:= 0				; MG_PreY
 		this._prevLongX				:= 0				; plx (static local)
 		this._prevLongY				:= 0				; ply (static local)
-		this._nowDir				:= ""				; dir (static local)
 		this._prevDir				:= ""				; prev_dir (static local)
 		this._prevLongDir			:= ""				; prev_long (static local)
 		this._angleThreshold		:= 0				; orange (static local)
@@ -354,67 +353,68 @@ class GestureClass
 	TriggerDown(btnName, *)
 	{
 		Critical()
-		if (!InStr(this._currentTriggers, btnName "_")) {
-			this.hints.HideGestureList()
-			this._triggerCount++
-			this._autoReleaseCounts[btnName] := 0
-			this._currentTriggers := this._currentTriggers . btnName "_"
+		if (InStr(this._currentTriggers, btnName "_")) {
+			return
+		}
+		this.hints.HideGestureList()
+		this._triggerCount++
+		this._autoReleaseCounts[btnName] := 0
+		this._currentTriggers := this._currentTriggers . btnName "_"
 
-			sendKey := !this._DefBehaviorDisabled(btnName)
-					? this.opt._triggerMap[btnName].sendkey : ""
+		sendKey := !this._DefBehaviorDisabled(btnName)
+				? this.opt._triggerMap[btnName].sendkey : ""
 
-			if (this._bActive && this._bTimedOut) {
+		if (this._bActive && this._bTimedOut) {
+			this.SendButton(btnName, sendKey, "Down")
+		}
+		else if (this._triggerCount == 1) {
+			; Begin to process gesture at first trigger-down
+			if (A_TickCount > (this._lastProcessTime
+							 + this.opt._doubleClickTimeout
+							 + this._waitNext))
+			{
+				this._currentGesture := btnName "_"
+				this.hints.SaveFirstTrigger(this._currentGesture)
+				this._snapshot := ""
+			} else {
+				this._currentGesture .= btnName "_"
+			}
+			this.GetMousePosInfo()
+			this._nowX := this._prevX := MG_X
+			this._nowY := this._prevY := MG_Y
+			this.hints.Reset()
+			this.trail.Reset(MG_X, MG_Y)
+			this.log.Reset()
+
+			if (MG_IsIgnoredTarget()) {
 				this.SendButton(btnName, sendKey, "Down")
 			}
-			else if (this._triggerCount == 1) {
-				; Begin to process gesture at first trigger-down
-				if (A_TickCount > (this._lastProcessTime
-								 + this.opt._doubleClickTimeout
-								 + this._waitNext))
-				{
-					this._currentGesture := btnName "_"
-					this.hints.SaveFirstTrigger(this._currentGesture)
-					this._snapshot := ""
-				} else {
-					this._currentGesture .= btnName "_"
-				}
-				this.GetMousePosInfo()
-				this._nowX := this._prevX := MG_X
-				this._nowY := this._prevY := MG_Y
-				this.hints.Reset()
-				this.trail.Reset(MG_X, MG_Y)
-				this.log.Reset()
-
-				if (MG_IsIgnoredTarget()) {
+			else {
+				this.hints.Start(MG_X, MG_Y)
+				this._bAborted := false
+				this._Check()
+				if (this._bAborted) {
+					this.hints.Stop(false)
 					this.SendButton(btnName, sendKey, "Down")
 				}
 				else {
-					this.hints.Start(MG_X, MG_Y)
-					this._bAborted := false
-					this._Check()
-					if (this._bAborted) {
-						this.hints.Stop(false)
-						this.SendButton(btnName, sendKey, "Down")
-					}
-					else {
-						this._StartRecognition()
-					}
+					this._StartRecognition()
 				}
-			} else {
-				; Processing the gesture sequence recognition
-				this._Recognition()
-				if (this._bypassGesture
-				&&	InStr("_" this._bypassTrigger "_", "_" btnName "_"))
-				{
-					this._currentGesture := this._bypassGesture . btnName "_"
-				} else {
-					this._currentGesture .= btnName "_"
-				}
-				this._Check()
-				this._prevX := this._nowX
-				this._prevY := this._nowY
-				this.log.ResetPrevTime()
 			}
+		} else {
+			; Processing the gesture sequence recognition
+			this._Recognition()
+			if (this._bypassGesture
+			&&	InStr("_" this._bypassTrigger "_", "_" btnName "_"))
+			{
+				this._currentGesture := this._bypassGesture . btnName "_"
+			} else {
+				this._currentGesture .= btnName "_"
+			}
+			this._Check()
+			this._prevX := this._nowX
+			this._prevY := this._nowY
+			this.log.ResetPrevTime()
 		}
 	}
 
@@ -594,7 +594,7 @@ class GestureClass
 		this._executedCount			:= 0
 		this._prevX := this._prevLongX := MG_X
 		this._prevY := this._prevLongY := MG_Y
-		this._nowDir := this._prevDir := this._prevLongDir := ""
+		this._prevDir := this._prevLongDir := ""
 		this._angleThreshold := this.opt._defAngleThreshold
 		this.hints.Reset()
 		this.log.ClearPrevGesture()
@@ -610,9 +610,9 @@ class GestureClass
 	_Recognition()
 	{
 		CoordMode("Mouse", "Screen")
-		MouseGetPos(&x, &y)
-		this._nowX := x
-		this._nowY := y
+		MouseGetPos(&nowX, &nowY)
+		this._nowX := nowX
+		this._nowY := nowY
 		bDrawTrail := true
 		if (this._triggerCount < 1) {
 			; All triggers have been released.
@@ -628,7 +628,7 @@ class GestureClass
 			this.hints.Stop(false)
 			bDrawTrail := false
 		}
-		else if ((MG_X-this._nowX)**2+(MG_Y-this._nowY)**2 < this.opt._timeoutDistance**2) {
+		else if ((MG_X-nowX)**2+(MG_Y-nowY)**2 < this.opt._timeoutDistance**2) {
 			; Less than the minimum distance. -> Reset the timeout.
 			this.ResetTimeout()
 		}
@@ -650,7 +650,7 @@ class GestureClass
 					this.SendButton(A_LoopField, sendKey, "Down")
 				}
 			}
-			MouseMove(this._nowX, this._nowY, 0)
+			MouseMove(nowX, nowY, 0)
 			BlockInput("Off")
 			Critical("Off")
 
@@ -658,25 +658,25 @@ class GestureClass
 			bDrawTrail := false
 		}
 		else if (!this._bTimedOut
-		&&		((powx:=(this._nowX-this._prevX)**2) + (powy:=(this._nowY-this._prevY)**2)
-														>= this.opt._distanceThreshold**2))
+		&&		((powx:=(nowX-this._prevX)**2) + (powy:=(nowY-this._prevY)**2)
+												>= this.opt._distanceThreshold**2))
 		{
 			; Movement exceeding the threshold distance has been detected
 			if (this.opt._b8DirMode) {
-				angle := Abs(this._90degrees - Abs(ATan((this._nowX-this._prevX) / (this._nowY-this._prevY))))
+				angle := Abs(this._90degrees - Abs(ATan((nowX-this._prevX) / (nowY-this._prevY))))
 				if (this._angleThreshold > angle) {
-					this._nowDir := (this._nowX > this._prevX) ? ((this._nowY > this._prevY) ? 3 : 9)
-															   : ((this._nowY > this._prevY) ? 1 : 7)
+					dir := (nowX > this._prevX) ? ((nowY > this._prevY) ? 3 : 9)
+												: ((nowY > this._prevY) ? 1 : 7)
 				} else {
-					this._nowDir := (powx > powy) ? ((this._nowX > this._prevX) ? 6 : 4)
-												  : ((this._nowY > this._prevY) ? 2 : 8)
+					dir := (powx > powy) ? ((nowX > this._prevX) ? 6 : 4)
+										 : ((nowY > this._prevY) ? 2 : 8)
 				}
 			} else {
-				this._nowDir := (powx > powy) ? ((this._nowX > this._prevX) ? "R" : "L")
-											  : ((this._nowY > this._prevY) ? "D" : "U")
+				dir := (powx > powy) ? ((nowX > this._prevX) ? "R" : "L")
+									 : ((nowY > this._prevY) ? "D" : "U")
 			}
 			bConfirmed := false
-			if (this._nowDir != this._prevDir) {
+			if (dir != this._prevDir) {
 				; Direction change has been detected
 				bConfirmed := true
 				this._prevLongDir := ""
@@ -684,47 +684,38 @@ class GestureClass
 			else {
 				; Determination of long distance movement
 				if (this.opt._b8DirMode) {
-					bConfirmed := ((this._nowX-this._prevLongX)**2 + (this._nowY-this._prevLongY)**2
-																 >= this.opt._longDiagThreshold**2)
+					bConfirmed := ((nowX-this._prevLongX)**2 + (nowY-this._prevLongY)**2
+															 >= this.opt._longDiagThreshold**2)
 				} else if (powx > powy) {
-					bConfirmed := (Abs(this._nowX-this._prevLongX) >= this.opt._longThresholdX)
+					bConfirmed := (Abs(nowX-this._prevLongX) >= this.opt._longThresholdX)
 				} else {
-					bConfirmed := (Abs(this._nowY-this._prevLongY) >= this.opt._longThresholdY)
+					bConfirmed := (Abs(nowY-this._prevLongY) >= this.opt._longThresholdY)
 				}
 				if (bConfirmed) {
-					if (this.opt._bFirstLongOnly && (this._prevLongDir == this._nowDir)) {
+					if (this.opt._bFirstLongOnly && (this._prevLongDir == dir)) {
 						bConfirmed := false
 					}
-					this._prevLongDir := this._nowDir
+					this._prevLongDir := dir
 				}
 			}
 			if (bConfirmed) {
 				; Movement has been confirmed
 				this.hints.HideGestureList()
-				this._currentGesture .= this._nowDir
+				this._currentGesture .= dir
 				if (this.opt._b8DirMode) {
-					if (this._nowDir & 1) {
-						this._angleThreshold := this.opt._afterDiagonal
-					} else {
-						this._angleThreshold := this.opt._afterOrthogonal
-					}
+					this._angleThreshold := (dir & 1) ? this.opt._afterDiagonal
+													  : this.opt._afterOrthogonal
 				}
 				this._prevLongX := this._prevX
 				this._prevLongY := this._prevY
-				this._prevDir := this._Check() ? "" : this._nowDir
+				this._prevDir := this._Check() ? "" : dir
 			}
-			MouseGetPos(&x, &y)
-			this._prevX := x
-			this._prevY := y
+			this._prevX := nowX
+			this._prevY := nowY
 			this.ResetTimeout()
 			this.log.ResetPrevTime()
 		}
-
-		if (bDrawTrail) {
-			this.trail.Draw()
-		} else {
-			this.trail.Erase()
-		}
+		bDrawTrail ? this.trail.Draw() : this.trail.Erase()
 	}
 
 	ResetTimeout() {

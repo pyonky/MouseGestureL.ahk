@@ -276,7 +276,7 @@ class TargetInfoClass
 			tinf1.SortChildren()
 			bInserted := false
 			for idx, tinf2 in arySorted {
-				if (tinf1.Name < tinf2.Name) {
+				if (StrCompare(tinf1.Name, tinf2.Name, "Logical") < 0) {
 					arySorted.InsertAt(idx, tinf1)
 					bInserted := true
 					break
