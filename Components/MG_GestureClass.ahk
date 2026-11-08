@@ -282,7 +282,8 @@ class GestureClass
 			MG_Title := WinGetTitle()
 			MG_Exe := MG_GetExeName(MG_HWND)
 		}
-		if (MG_HCTL := MG_GetFocus()) {
+		MG_HCTL := MG_GetFocus()
+		if (WinExist(MG_HCTL)) {
 			MG_CClass := WinGetClass(MG_HCTL)
 		}
 	}
@@ -294,7 +295,7 @@ class GestureClass
 		CoordMode("Mouse", "Screen")
 		MG_X := MG_Y := MG_HWND := MG_HCTL := 0
 		MouseGetPos(&MG_X, &MG_Y, &MG_HWND, &MG_HCTL, 3)
-		if (MG_HCTL) {
+		if (WinExist(MG_HCTL)) {
 			local lParam := (MG_Y & 0xFFFF)<<16|(MG_X & 0xFFFF)
 			if (SendMessage(0x0084, 0, lParam, , MG_HCTL) == 0xFFFFFFFF) {		; WM_NCHITTEST
 				MouseGetPos(, , , &MG_HCTL, 2)
@@ -346,7 +347,9 @@ class GestureClass
 				}
 			}
 		}
-		MG_CClass := WinGetClass(MG_HCTL)
+		if (WinExist(MG_HCTL)) {
+			MG_CClass := WinGetClass(MG_HCTL)
+		}
 		DllCall("GlobalFree", "Ptr",prc)
 	}
 

@@ -781,25 +781,24 @@ MG_ControlH() {
 ;-------------------------------------------------------------------------------
 MG_HitTest(bControl:=false)
 {
-	Try {
-		hTarget := bControl ? MG_HCTL : MG_HWND
-		lParam := (MG_Y & 0xFFFF)<<16 | (MG_X & 0xFFFF)
-		ret := SendMessage(0x0084, 0, lParam, , hTarget)	; WM_NCHITTEST
-		return (ret<8)
-				? ((ret<4)
-					? ((ret<2)
-						? (ret==0 ? "Nowhere" : (bControl ? "Client" : MG_HitTest(1)))
-						: (ret==2 ? "Caption" : "SysMenu"))
-					: ((ret<6)
-						? (ret==4 ? "SizeBox" : "Menu")
-						: (ret==6 ? "HScroll" : "VScroll")))
-				: ((ret<10)
-					? ((ret==8) ? "MinButton" : "MaxButton")
-					: ((ret<18) ? "SizeBorder" : (ret== 18 ? "Border"
-					: (ret==20 ? "CloseButton" : "HelpButton"))))
-	} Catch {
-		return ""
+	if (bControl && !WinExist(MG_HCTL)) {
+		return "Nowhere"
 	}
+	hTarget := bControl ? MG_HCTL : MG_HWND
+	lParam := (MG_Y & 0xFFFF)<<16 | (MG_X & 0xFFFF)
+	ret := SendMessage(0x0084, 0, lParam, , hTarget)	; WM_NCHITTEST
+	return (ret<8)
+			? ((ret<4)
+				? ((ret<2)
+					? (ret==0 ? "Nowhere" : (bControl ? "Client" : MG_HitTest(1)))
+					: (ret==2 ? "Caption" : "SysMenu"))
+				: ((ret<6)
+					? (ret==4 ? "SizeBox" : "Menu")
+					: (ret==6 ? "HScroll" : "VScroll")))
+			: ((ret<10)
+				? ((ret==8) ? "MinButton" : "MaxButton")
+				: ((ret<18) ? "SizeBorder" : (ret== 18 ? "Border"
+				: (ret==20 ? "CloseButton" : "HelpButton"))))
 }
 
 ;-------------------------------------------------------------------------------
@@ -809,7 +808,9 @@ MG_HitTest(bControl:=false)
 ;-------------------------------------------------------------------------------
 MG_LvHitTest()
 {
-	if (MG_CClass!="SysListView32" && MG_CClass!="TListView") {
+	if (!WinExist(MG_HCTL)
+	||	(MG_CClass!="SysListView32" && MG_CClass!="TListView"))
+	{
 		return ""
 	}
 	pt := DllCall("GlobalAlloc", "UInt",0x40, "UInt",8, "Ptr")
@@ -837,7 +838,9 @@ MG_LvHitTest()
 ;-------------------------------------------------------------------------------
 MG_TvHitTest()
 {
-	if (MG_CClass!="SysTreeView32" && !MG_CClass!="TTreeView") {
+	if (!WinExist(MG_HCTL)
+	||	(MG_CClass!="SysTreeView32" && !MG_CClass!="TTreeView"))
+	{
 		return ""
 	}
 	pt := DllCall("GlobalAlloc", "UInt",0x40, "UInt",8, "Ptr")
@@ -1024,9 +1027,11 @@ MG_CIndex()
 ;-------------------------------------------------------------------------------
 MG_DumpWinInfo()
 {
+	wx := wy := ww := wh := cx := cy := cw := ch := 0
 	WinGetPos(&wx, &wy, &ww, &wh, MG_HWND)
-	ControlGetPos(&cx, &cy, &cw, &ch, MG_HCTL)
-
+	if (WinExist(MG_HCTL)) {
+		ControlGetPos(&cx, &cy, &cw, &ch, MG_HCTL)
+	}
 	return "MG_Exe	" . MG_Exe
 		. "`nMG_GetExeName(, true)	" . MG_GetExeName(MG_HWND, true)
 		. "`nMG_CommandLine()	" . MG_CommandLine()
@@ -1166,6 +1171,9 @@ MG_CursorInRect(x, y, width, height, target:=0, origin:=0, mode:=0)
 		WinGetPos(&winX, &winY, &winW, &winH, MG_HWND)
 	}
 	else if (target==1) {
+		if (!WinExist(MG_HCTL)) {
+			return false
+		}
 		WinGetPos(&winX, &winY, &winW, &winH, MG_HCTL)
 	}
 	else {
@@ -1216,9 +1224,9 @@ MG_CursorInRect(x, y, width, height, target:=0, origin:=0, mode:=0)
 	if (x1<=mx && mx<=x2
 	&&	y1<=my && my<=y2)
 	{
-		return 1
+		return true
 	}
-	return 0
+	return false
 }
 
 
@@ -1295,11 +1303,15 @@ MG_Move(x:=0, y:=0, origin:=0, bAbs:=false)
 ;-------------------------------------------------------------------------------
 ; Scroll
 ;														Implemented by lukewarm
+;														Modified by Pyonkichi
 ;-------------------------------------------------------------------------------
 MG_Scroll(x:=0, y:=0, hCtrl:=0)
 {
-	if (hCtrl == 0) {
+	if (!hCtrl) {
 		hCtrl := MG_HCTL
+	}
+	if (!WinExist(hCtrl)) {
+		return
 	}
 	Loop Abs(x) {
 		PostMessage(0x0114, x>=0, 0, , hCtrl)		; WM_HSCROLL
@@ -1312,11 +1324,15 @@ MG_Scroll(x:=0, y:=0, hCtrl:=0)
 ;-------------------------------------------------------------------------------
 ; Instant scroll
 ;														Implemented by lukewarm
+;														Modified by Pyonkichi
 ;-------------------------------------------------------------------------------
 MG_InstantScroll(stay:=1, ppc_x:=8, ppc_y:=12, hCtrl:=0)
 {
 	if (!hCtrl) {
 		hCtrl := MG_HCTL
+	}
+	if (!WinExist(hCtrl)) {
+		return
 	}
 	CoordMode("Mouse", "Screen")
 	MouseGetPos(&mx, &my)
@@ -1336,6 +1352,7 @@ MG_InstantScroll(stay:=1, ppc_x:=8, ppc_y:=12, hCtrl:=0)
 ;-------------------------------------------------------------------------------
 ; Drag scroll
 ;														Implemented by lukewarm
+;														Modified by Pyonkichi
 ;-------------------------------------------------------------------------------
 MG_DragScroll(ppc_x:=8, ppc_y:=12, hCtrl:=0)
 {
@@ -1343,6 +1360,9 @@ MG_DragScroll(ppc_x:=8, ppc_y:=12, hCtrl:=0)
 
 	if (!hCtrl) {
 		hCtrl := MG_HCTL
+	}
+	if (!WinExist(hCtrl)) {
+		return
 	}
 	if (lmx!=MG_X || lmy!=MG_Y || lctl!=hCtrl) {
 		lmx := lx := MG_X
@@ -1372,6 +1392,9 @@ MG_DragScroll(ppc_x:=8, ppc_y:=12, hCtrl:=0)
 ;-------------------------------------------------------------------------------
 MG_Scroll2(dir, cnt, bPageScroll:=false)
 {
+	if (!WinExist(MG_HCTL)) {
+		return
+	}
 	WinGetPos(&x, &y, &w, &h, MG_HCTL)
 	rc := MG_Rect(x, y, w, h)
 	hCtrl := MG_FindScrollBar(MG_HCTL, dir, rc, MG_X, MG_Y)
@@ -1457,9 +1480,9 @@ MG_DragScroll2(bFollow:=true, bAuto:=false, sensV:=15, sensH:=30)
 	static lx:=0, ly:=0, lmx:=0, lmy:=0, lctl:=0
 
 	if (lmx!=MG_X || lmy!=MG_Y || lctl!=MG_HCTL) {
-		lmx:=lx:=MG_X
-		lmy:=ly:=MG_Y
-		lctl:=MG_HCTL
+		lmx := lx := MG_X
+		lmy := ly := MG_Y
+		lctl := MG_HCTL
 	}
 	CoordMode("Mouse", "Screen")
 	MouseGetPos(&mx, &my)
@@ -1512,7 +1535,7 @@ MG_SendWheel(dir, counts:=1)
 		CoordMode("Mouse", "Screen")
 		MouseGetPos(&MG_X, &MG_Y, &MG_HWND, &MG_HCTL, 3)
 	}
-	hWnd := MG_HCTL ? MG_HCTL : MG_HWND
+	hWnd := WinExist(MG_HCTL) ? MG_HCTL : MG_HWND
 	wParam := (dir="U" ? 0x00780000*counts : 0xFF880000*counts)
 			| GetKeyState("LButton")
 			| GetKeyState("RButton")  << 1
@@ -1871,7 +1894,7 @@ MG_WinActivation(bCtrlFocus)
 	if (!WinActive(MG_HWND)) {
 		WinActivate(MG_HWND)
 	}
-	if (bCtrlFocus && (MG_HCTL != ControlGetFocus(MG_HWND))) {
+	if (bCtrlFocus && WinExist(MG_HCTL) && (MG_HCTL != ControlGetFocus(MG_HWND))) {
 		ControlFocus(MG_HCTL)
 	}
 }
