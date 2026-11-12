@@ -423,12 +423,12 @@ MG_TriggerCount() {
 }
 
 ;-------------------------------------------------------------------------------
-; Retrieve the cursor position and target information
+; Gather cursor position and target information into global variables
 ;														Implemented by lukewarm
 ;														Modified by Pyonkichi
 ;-------------------------------------------------------------------------------
-MG_GetMousePosInfo() {
-	MG.GetMousePosInfo()
+MG_GatherMousePosInfo() {
+	MG.GatherMousePosInfo()
 }
 
 ;-------------------------------------------------------------------------------
@@ -500,7 +500,7 @@ MG_Hold() {
 ;														Modified by Pyonkichi
 ;-------------------------------------------------------------------------------
 MG_Counter(gesture:="", count:=2) {
-	MG.Counter(gesture, count)
+	return MG.Counter(gesture, count)
 }
 
 ;-------------------------------------------------------------------------------

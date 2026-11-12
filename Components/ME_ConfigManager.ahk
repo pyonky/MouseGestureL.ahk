@@ -2013,7 +2013,7 @@ ME_GetTriggerActivationFuncStr()
 			buf .= "`treturn (MG_TriggerEnabled(`"" binf.Name "`") && MG_TriggerCount())"
 		}
 		else {
-			buf .= "`tMG_TriggerCount() ? `"`" : MG_GetMousePosInfo()`n"
+			buf .= "`tMG_TriggerCount() ? `"`" : MG_GatherMousePosInfo()`n"
 			buf .= "`treturn (MG_TriggerEnabled(`"" binf.Name "`") && (MG_TriggerCount() || (!MG_IsDisabled()"
 			if (InStr(funcScript, ME_DefTargetName)) {
 				buf .= (ME_ExDefMap.Has(binf.Name) ? ME_ExDefMap[binf.Name] : "") . ")))"

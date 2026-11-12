@@ -199,7 +199,8 @@ class GestureClass
 		this.trail.ShowWindow()
 	}
 
-	_EnableTrigger(btnName) {
+	_EnableTrigger(btnName)
+	{
 		if (!this.opt._triggerMap.Has(btnName)) {
 			return
 		}
@@ -246,7 +247,8 @@ class GestureClass
 		this.trail.HideWindow()
 	}
 
-	_DisableTrigger(btnName) {
+	_DisableTrigger(btnName)
+	{
 		if (!this.opt._triggerMap.Has(btnName)) {
 			return
 		}
@@ -288,7 +290,7 @@ class GestureClass
 		}
 	}
 
-	GetMousePosInfo()
+	GatherMousePosInfo()
 	{
 		global
 		MG_TickCount := A_TickCount
@@ -382,7 +384,7 @@ class GestureClass
 			} else {
 				this._currentGesture .= btnName "_"
 			}
-			this.GetMousePosInfo()
+			this.GatherMousePosInfo()
 			this._nowX := this._prevX := MG_X
 			this._nowY := this._prevY := MG_Y
 			this.hints.Reset()
@@ -507,7 +509,7 @@ class GestureClass
 												+ this.opt._doubleClickTimeout
 												+ this._waitNext)))
 			{
-				this.GetMousePosInfo()
+				this.GatherMousePosInfo()
 				if (MG_IsIgnoredTarget()) {
 					this.SendButton(btnName, sendKey)
 				}

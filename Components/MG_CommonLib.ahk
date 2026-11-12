@@ -433,7 +433,6 @@ class GestureRendererClass
 
 	_Rendering(hDC, x, y, gestureSequence, currentPos:=0, bMeasure:=false, &w:=0, &h:=0)
 	{
-
 		hPen := hPen2 := hPenOld := 0
 		if (!bMeasure) {
 			DllCall("SetTextColor", "Ptr",hDC, "UInt",this._colorRef1)

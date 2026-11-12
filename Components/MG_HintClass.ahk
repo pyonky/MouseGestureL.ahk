@@ -295,7 +295,7 @@ class GestureHintClass extends GestureDisplayBase
 	{
 		if (!this._bGestureListShowing) {
 			if (!MG.Active) {
-				MG.GetMousePosInfo()
+				MG.GatherMousePosInfo()
 			}
 			this._GetTargetMonitorRect(MG_X, MG_Y)
 			this._dispPos := pos
