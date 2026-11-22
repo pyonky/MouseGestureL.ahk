@@ -5447,6 +5447,7 @@ ME_GesturePatWarningDlg(gestureSequence)
 	msg := StrReplace(ME_LngText029, ME_ReplaceStr, gestureSequence)
 	text := dlg.Add("Text", "Section", msg)
 	cbDisableWarning := dlg.Add("CheckBox", "xs+20 y+20 h14", ME_LngCheckBox019)
+	cbDisableWarning.OnEvent("Click", (cb, *) => Config_DisableWarning := cb.Value)
 
 	text.GetPos(&tx, , &tw)
 	bw := 90
@@ -5454,9 +5455,10 @@ ME_GesturePatWarningDlg(gestureSequence)
 	btnOK := dlg.Add("Button", "x" bx " y+14 w" bw " Default", ME_LngButton001)
 	MG_RegisterGuiClose(dlg, btnOK)
 
+	prevCritical := Critical("Off")
 	dlg.Show("AutoSize")
 	WinWaitClose(dlg.Hwnd)
-	Config_DisableWarning := cbDisableWarning.Value
+	Critical(prevCritical)
 }
 
 ;-------------------------------------------------------------------------------
