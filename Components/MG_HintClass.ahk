@@ -506,7 +506,7 @@ class GestureHintClass extends GestureDisplayBase
 					; Eliminate the cases matched to part of the button names
 					def := RegExReplace(definedGesture, this.opt._triggersRegEx "_")
 					cur := RegExReplace(currentGesture, this.opt._triggersRegEx "_")
-					if (InStr(def, cur) != 1) {
+					if (cur!="" && InStr(def, cur)!=1) {
 						continue
 					}
 				}
