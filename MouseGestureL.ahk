@@ -781,10 +781,10 @@ MG_ControlH() {
 ;-------------------------------------------------------------------------------
 MG_HitTest(bControl:=false)
 {
-	if (bControl && !WinExist(MG_HCTL)) {
+	hTarget := bControl ? MG_HCTL : MG_HWND
+	if (!WinExist(hTarget)) {
 		return "Nowhere"
 	}
-	hTarget := bControl ? MG_HCTL : MG_HWND
 	lParam := (MG_Y & 0xFFFF)<<16 | (MG_X & 0xFFFF)
 	ret := SendMessage(0x0084, 0, lParam, , hTarget)	; WM_NCHITTEST
 	return (ret<8)
