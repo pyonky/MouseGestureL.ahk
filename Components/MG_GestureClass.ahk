@@ -642,7 +642,7 @@ class GestureClass
 				|| (this._bTimeoutEnabled && this.opt._timeout>0
 					&& (A_TickCount > this._timeLimit) && this._executedCount==0)))
 		{
-			; Recognition was aborted within the action script, or a timeout. -> _Reproduce user operations.
+			; Recognition was aborted within the action script, or a timeout. -> Reproduce user operations.
 			Critical()
 			this._bTimedOut := true
 			SetMouseDelay(-1)
@@ -668,7 +668,8 @@ class GestureClass
 		{
 			; Movement exceeding the threshold distance has been detected
 			if (this.opt._b8DirMode) {
-				angle := Abs(this._90degrees - Abs(ATan((nowX-this._prevX) / (nowY-this._prevY))))
+				angle := (powy == 0) ? this._90degrees
+									 : Abs(this._90degrees - Abs(ATan((nowX-this._prevX) / (nowY-this._prevY))))
 				if (this._angleThreshold > angle) {
 					dir := (nowX > this._prevX) ? ((nowY > this._prevY) ? 3 : 9)
 												: ((nowY > this._prevY) ? 1 : 7)
