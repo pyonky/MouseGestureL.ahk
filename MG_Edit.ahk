@@ -5004,15 +5004,16 @@ ME_DeleteGesture(*)
 			return
 		}
 	}
-	ME_Gestures.RemoveAt(ME_LBGesture.Value)
+	sel := ME_LBGesture.Value
+	ME_Gestures.RemoveAt(sel)
 	ME_ClearGesturePatterns()
 	ME_ClearAction(true, "B|E")
 	ME_ShowAllGestures()
 
 	nGestures := ME_Gestures.Length
-	idx := (ME_LBGesture.Value > nGestures) ? nGestures : ME_LBGesture.Value
-	ME_ShowGesture(idx)
-	ME_ShowGesturePattern(idx, 1)
+	sel := (sel > nGestures) ? nGestures : sel
+	ME_ShowGesture(sel)
+	ME_ShowGesturePattern(sel, 1)
 
 	ME_SelectAssignedAction()
 	ME_ShowAssignedGestures()
@@ -5111,16 +5112,12 @@ _OnGestureListContextMenuSelect(itemName, itemPos, menuObj)
 ME_ShowGesture(idxG)
 {
 	if (idxG <= 0) {
+		_EnableGestureToolButtons(idxG)
 		return
 	}
 	Critical()
 	ME_SelectLBItem(ME_LBGesture, idxG)
-
-	; Enabling the tool buttons
-	ME_BGestureUp.Enabled := ME_GestureCanMoveUp(idxG)
-	ME_BGestureDown.Enabled := ME_GestureCanMoveDown(idxG)
-	ME_BGestureDup.Enabled := ME_GestureCanCopy(idxG)
-	ME_BGestureDel.Enabled := ME_GestureCanDelete(idxG)
+	_EnableGestureToolButtons(idxG)
 
 	; Gesture name
 	ginf := ME_GestureInfoFromIndex(idxG)
@@ -5174,6 +5171,14 @@ ME_ShowGesture(idxG)
 	ME_LBDefAction.Delete()
 	ME_LBDefAction.Add([defAction])
 	ME_LBDefAction.Enabled := bDefEnable
+}
+
+_EnableGestureToolButtons(idxG)
+{
+	ME_BGestureUp.Enabled := ME_GestureCanMoveUp(idxG)
+	ME_BGestureDown.Enabled := ME_GestureCanMoveDown(idxG)
+	ME_BGestureDup.Enabled := ME_GestureCanCopy(idxG)
+	ME_BGestureDel.Enabled := ME_GestureCanDelete(idxG)
 }
 
 ;-------------------------------------------------------------------------------
